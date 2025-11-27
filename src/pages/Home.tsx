@@ -50,6 +50,16 @@ const Home: React.FC = () => {
                         </button>
                     )}
 
+                    {(user.role === 'Bienes' || user.role === 'Admin') && (
+                        <button
+                            onClick={() => navigate('/inventory')}
+                            className="btn-primary"
+                            style={{ maxWidth: '200px', background: '#059669' }}
+                        >
+                            Ir a Inventario
+                        </button>
+                    )}
+
                     <button onClick={handleLogout} className="btn-primary" style={{ maxWidth: '200px', background: '#ef4444' }}>
                         Cerrar Sesión
                     </button>

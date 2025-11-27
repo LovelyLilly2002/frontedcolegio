@@ -6,6 +6,7 @@ import './App.css';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import LibraryDashboard from './pages/Library/LibraryDashboard';
+import InventoryDashboard from './pages/Inventory/InventoryDashboard';
 
 function App() {
   return (
@@ -18,6 +19,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['Biblioteca', 'Admin', 'General']}>
               <LibraryDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute allowedRoles={['Bienes', 'Admin']}>
+              <InventoryDashboard />
             </ProtectedRoute>
           }
         />
