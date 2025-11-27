@@ -7,6 +7,8 @@ import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import LibraryDashboard from './pages/Library/LibraryDashboard';
 import InventoryDashboard from './pages/Inventory/InventoryDashboard';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import UserManagement from './pages/Admin/UserManagement';
 
 function App() {
   return (
@@ -27,6 +29,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['Bienes', 'Admin']}>
               <InventoryDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <UserManagement />
             </ProtectedRoute>
           }
         />

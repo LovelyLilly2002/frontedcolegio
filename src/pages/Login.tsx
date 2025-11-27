@@ -15,8 +15,12 @@ const Login: React.FC = () => {
         setLoading(true);
 
         try {
-            await authService.login(username, password);
-            navigate('/');
+            const user = await authService.login(username, password);
+            if (user.role === 'Admin') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);

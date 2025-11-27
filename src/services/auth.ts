@@ -69,5 +69,60 @@ export const authService = {
 
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem(CURRENT_USER_KEY);
+  },
+
+  getAllUsers: (): Promise<User[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const usersStr = localStorage.getItem(USERS_KEY);
+        const users: User[] = usersStr ? JSON.parse(usersStr) : [];
+        resolve(users);
+      }, 500);
+    });
+  },
+
+  updateUser: (username: string, data: Partial<User>): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const usersStr = localStorage.getItem(USERS_KEY);
+        let users: User[] = usersStr ? JSON.parse(usersStr) : [];
+
+        const index = users.findIndex(u => u.username === username);
+        if (index !== -1) {
+          users[index] = { ...users[index], ...data };
+          localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+          // Update current user if it's the one being edited
+          const currentUser = authService.getCurrentUser();
+          if (currentUser && currentUser.username === username) {
+            const { password, ...userWithoutPassword } = users[index];
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
+          }
+
+          resolve();
+        } else {
+          reject(new Error('Usuario no encontrado'));
+        }
+      }, 500);
+    });
+  },
+
+  deleteUser: (username: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const usersStr = localStorage.getItem(USERS_KEY);
+        let users: User[] = usersStr ? JSON.parse(usersStr) : [];
+
+        const initialLength = users.length;
+        users = users.filter(u => u.username !== username);
+
+        if (users.length < initialLength) {
+          localStorage.setItem(USERS_KEY, JSON.stringify(users));
+          resolve();
+        } else {
+          reject(new Error('Usuario no encontrado'));
+        }
+      }, 500);
+    });
   }
 };
