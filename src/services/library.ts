@@ -218,5 +218,55 @@ export const libraryService = {
 
             resolve();
         });
+    },
+
+    addBook: (book: Omit<Book, 'id'>): Promise<void> => {
+        return new Promise((resolve) => {
+            const books = libraryService.getBooks();
+            const newBook: Book = {
+                ...book,
+                id: Date.now().toString()
+            };
+            books.push(newBook);
+            localStorage.setItem(BOOKS_KEY, JSON.stringify(books));
+            resolve();
+        });
+    },
+
+    updateBook: (updatedBook: Book): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const books = libraryService.getBooks();
+            const index = books.findIndex(b => b.id === updatedBook.id);
+            if (index === -1) {
+                reject(new Error('Libro no encontrado'));
+                return;
+            }
+            books[index] = updatedBook;
+            localStorage.setItem(BOOKS_KEY, JSON.stringify(books));
+            resolve();
+        });
+    },
+
+    deleteBook: (bookId: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const books = libraryService.getBooks();
+            const index = books.findIndex(b => b.id === bookId);
+            if (index === -1) {
+                reject(new Error('Libro no encontrado'));
+                return;
+            }
+
+            // Optional: Check if book has active loans before deleting
+            const loans = libraryService.getLoans();
+            const activeLoans = loans.some(l => l.bookId === bookId && l.status === 'Active');
+            if (activeLoans) {
+                reject(new Error('No se puede eliminar un libro con préstamos activos'));
+                return;
+            }
+
+            books.splice(index, 1);
+            localStorage.setItem(BOOKS_KEY, JSON.stringify(books));
+            resolve();
+        });
     }
 };

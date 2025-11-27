@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { libraryService, type Book } from '../../services/library';
 import { authService } from '../../services/auth';
+import BookForm from './BookForm';
 
 const BookList: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const user = authService.getCurrentUser();
     const isGeneral = user?.role === 'General';
+
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingBook, setEditingBook] = useState<Book | undefined>(undefined);
 
     const refreshBooks = () => {
         setBooks(libraryService.getBooks());
@@ -29,9 +33,64 @@ const BookList: React.FC = () => {
         }
     };
 
+    const handleCreate = async (bookData: Omit<Book, 'id'>) => {
+        try {
+            await libraryService.addBook(bookData);
+            setMessage({ text: 'Libro registrado correctamente', type: 'success' });
+            setIsFormOpen(false);
+            refreshBooks();
+        } catch (err) {
+            setMessage({ text: 'Error al registrar el libro', type: 'error' });
+        }
+    };
+
+    const handleUpdate = async (bookData: Omit<Book, 'id'>) => {
+        if (!editingBook) return;
+        try {
+            await libraryService.updateBook({ ...bookData, id: editingBook.id });
+            setMessage({ text: 'Libro actualizado correctamente', type: 'success' });
+            setIsFormOpen(false);
+            setEditingBook(undefined);
+            refreshBooks();
+        } catch (err) {
+            setMessage({ text: 'Error al actualizar el libro', type: 'error' });
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('¿Estás seguro de eliminar este libro?')) return;
+        try {
+            await libraryService.deleteBook(id);
+            setMessage({ text: 'Libro eliminado correctamente', type: 'success' });
+            refreshBooks();
+        } catch (err) {
+            if (err instanceof Error) {
+                setMessage({ text: err.message, type: 'error' });
+            }
+        }
+    };
+
+    const openEdit = (book: Book) => {
+        setEditingBook(book);
+        setIsFormOpen(true);
+    };
+
+    const canManage = user?.role === 'Biblioteca' || user?.role === 'Admin';
+
     return (
         <div>
-            <h3 style={{ marginBottom: '1rem', color: '#4f46e5' }}>Inventario de Libros</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, color: '#4f46e5' }}>Inventario de Libros</h3>
+                {canManage && (
+                    <button
+                        className="btn-primary"
+                        style={{ width: 'auto' }}
+                        onClick={() => { setEditingBook(undefined); setIsFormOpen(true); }}
+                    >
+                        + Nuevo Libro
+                    </button>
+                )}
+            </div>
 
             {message && (
                 <div style={{
@@ -53,7 +112,7 @@ const BookList: React.FC = () => {
                             <th style={{ padding: '1rem', textAlign: 'left' }}>Autor</th>
                             <th style={{ padding: '1rem', textAlign: 'left' }}>ISBN</th>
                             <th style={{ padding: '1rem', textAlign: 'center' }}>Disponible</th>
-                            {isGeneral && <th style={{ padding: '1rem', textAlign: 'center' }}>Acción</th>}
+                            <th style={{ padding: '1rem', textAlign: 'center' }}>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,8 +124,8 @@ const BookList: React.FC = () => {
                                 <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 'bold', color: book.quantity > 0 ? '#10b981' : '#ef4444' }}>
                                     {book.quantity}
                                 </td>
-                                {isGeneral && (
-                                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                    {isGeneral && (
                                         <button
                                             onClick={() => handleRequest(book.id)}
                                             disabled={book.quantity === 0}
@@ -81,13 +140,37 @@ const BookList: React.FC = () => {
                                         >
                                             Solicitar
                                         </button>
-                                    </td>
-                                )}
+                                    )}
+                                    {canManage && (
+                                        <>
+                                            <button
+                                                onClick={() => openEdit(book)}
+                                                style={{ marginRight: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5', fontWeight: 600 }}
+                                            >
+                                                Editar
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(book.id)}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontWeight: 600 }}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {isFormOpen && (
+                <BookForm
+                    initialData={editingBook}
+                    onSubmit={editingBook ? handleUpdate : handleCreate}
+                    onCancel={() => setIsFormOpen(false)}
+                />
+            )}
         </div>
     );
 };
